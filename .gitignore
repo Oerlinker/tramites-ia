@@ -1,0 +1,9 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
+.idea/
+.claude/
+uvicorn_out.txt
+.env.example
