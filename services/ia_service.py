@@ -1,11 +1,11 @@
 import json
 import os
 from dotenv import load_dotenv
-from google import genai
+from groq import Groq
 
 load_dotenv()
-_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-_MODEL = "gemini-2.5-flash"
+_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+_MODEL = "llama-3.3-70b-versatile"
 
 
 async def procesar_consulta(request) -> dict:
@@ -31,9 +31,66 @@ Responde SOLO con JSON válido, sin texto adicional ni backticks:
 Tipos válidos: inicio, accion, decision, fin, fork, join
 Genera entre 5 y 8 elementos. Swimlanes = departamentos o actores reales del proceso."""
 
-    response = _client.models.generate_content(model=_MODEL, contents=prompt)
-    text = response.text.strip()
+    response = _client.chat.completions.create(model=_MODEL, messages=[{"role": "user", "content": prompt}])
+    text = response.choices[0].message.content.strip()
 
+    if "```" in text:
+        text = text.split("```")[1]
+        if text.startswith("json"):
+            text = text[4:]
+
+    return json.loads(text.strip())
+
+
+async def sugerir_campos_formulario(descripcion_actividad: str) -> dict:
+    prompt = f"""Eres un experto en diseño de formularios empresariales.
+Dada la descripción de una actividad empresarial, sugiere los campos necesarios para un formulario.
+
+Actividad: "{descripcion_actividad}"
+
+Responde SOLO con JSON válido, sin texto adicional ni backticks:
+{{
+  "campos": [
+    {{"nombre": "nombre_campo", "etiqueta": "Etiqueta visible", "tipo": "texto", "requerido": true, "placeholder": "Texto de ejemplo"}}
+  ]
+}}
+
+Tipos válidos: "texto", "numero", "fecha", "select", "textarea", "email", "telefono"
+Genera entre 3 y 8 campos relevantes para la actividad descrita."""
+
+    response = _client.chat.completions.create(model=_MODEL, messages=[{"role": "user", "content": prompt}])
+    text = response.choices[0].message.content.strip()
+
+    if "```" in text:
+        text = text.split("```")[1]
+        if text.startswith("json"):
+            text = text[4:]
+
+    return json.loads(text.strip())
+
+
+async def recomendar_politica(descripcion_tramite: str, politicas_disponibles: list) -> dict:
+    politicas_str = json.dumps(politicas_disponibles, ensure_ascii=False)
+    prompt = f"""Eres un experto en gestión de trámites y políticas empresariales.
+Dado un trámite y una lista de políticas disponibles, determina cuál política es la más adecuada.
+
+Trámite: "{descripcion_tramite}"
+
+Políticas disponibles:
+{politicas_str}
+
+Responde SOLO con JSON válido, sin texto adicional ni backticks:
+{{
+  "politica_id": "id_de_la_politica",
+  "politica_nombre": "Nombre de la política",
+  "confianza": 0.95,
+  "razon": "Explicación breve de por qué esta política es la más adecuada"
+}}
+
+El campo "confianza" debe ser un número entre 0.0 y 1.0."""
+
+    response = _client.chat.completions.create(model=_MODEL, messages=[{"role": "user", "content": prompt}])
+    text = response.choices[0].message.content.strip()
 
     if "```" in text:
         text = text.split("```")[1]

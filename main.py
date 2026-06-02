@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import asistente, analitica
+from routers import asistente, analitica, nlp
 
 app = FastAPI(
     title="Trámites IA",
@@ -18,6 +18,7 @@ app.add_middleware(
 
 app.include_router(asistente.router)
 app.include_router(analitica.router)
+app.include_router(nlp.router)
 
 
 @app.get("/", tags=["Health"])
