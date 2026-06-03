@@ -163,20 +163,29 @@ class RutaPrediccionModel:
         return {"probabilidad": prob, "recomendacion": recomendacion}
 
 
-_tiempo_model = TiempoPrediccionModel()
-_anomalia_model = AnomaliaDetectorModel()
-_ruta_model = RutaPrediccionModel()
+_tiempo_model = None
+_anomalia_model = None
+_ruta_model = None
 
 
 def predecir_tiempo(orden: int, num_campos: int, hora: int, dia: int) -> float:
+    global _tiempo_model
+    if _tiempo_model is None:
+        _tiempo_model = TiempoPrediccionModel()
     return _tiempo_model.predecir_tiempo(orden, num_campos, hora, dia)
 
 
 def es_anomalia(tiempo_actual: float, tiempo_esperado: float) -> dict:
+    global _anomalia_model
+    if _anomalia_model is None:
+        _anomalia_model = AnomaliaDetectorModel()
     return _anomalia_model.es_anomalia(tiempo_actual, tiempo_esperado)
 
 
 def predecir_exito(orden_actual: int, total_actividades: int, completadas: int) -> dict:
+    global _ruta_model
+    if _ruta_model is None:
+        _ruta_model = RutaPrediccionModel()
     return _ruta_model.predecir_exito(orden_actual, total_actividades, completadas)
 
 
@@ -187,21 +196,21 @@ def get_resumen_modelos() -> dict:
             "prediccion_tiempo": {
                 "nombre": "TiempoPrediccionModel",
                 "tipo": "Regresión — Dense Sequential",
-                "entrenado": _tiempo_model.entrenado,
+                "entrenado": _tiempo_model.entrenado if _tiempo_model else False,
                 "features": ["orden_actividad", "num_campos_formulario", "hora_del_dia", "dia_semana"],
                 "salida": "tiempo_estimado_horas",
             },
             "deteccion_anomalia": {
                 "nombre": "AnomaliaDetectorModel",
                 "tipo": "Autoencoder — Encoder-Decoder",
-                "entrenado": _anomalia_model.entrenado,
-                "threshold": round(_anomalia_model.threshold, 4) if _anomalia_model.threshold else None,
+                "entrenado": _anomalia_model.entrenado if _anomalia_model else False,
+                "threshold": round(_anomalia_model.threshold, 4) if _anomalia_model and _anomalia_model.threshold else None,
                 "features": ["tiempo_actual_horas", "tiempo_esperado_horas"],
             },
             "prediccion_ruta": {
                 "nombre": "RutaPrediccionModel",
                 "tipo": "Clasificación Binaria — Dense Sequential",
-                "entrenado": _ruta_model.entrenado,
+                "entrenado": _ruta_model.entrenado if _ruta_model else False,
                 "features": ["orden_actual", "total_actividades", "porcentaje_completado"],
                 "salida": "probabilidad_exito",
             },
