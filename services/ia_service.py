@@ -75,8 +75,10 @@ async def audio_a_formulario(audio_bytes: bytes, filename: str) -> dict:
         file=(filename, audio_bytes, "audio/webm"),
         language="es"
     )
-    campos = await sugerir_campos_formulario(transcripcion.text)
-    return {"transcripcion": transcripcion.text, "campos": campos.get("campos", [])}
+    text = transcripcion.text if hasattr(transcripcion, 'text') else str(transcripcion)
+    text = text.encode('utf-8', errors='ignore').decode('utf-8')
+    campos = await sugerir_campos_formulario(text)
+    return {"transcripcion": text, "campos": campos.get("campos", [])}
 
 
 async def recomendar_politica(descripcion_tramite: str, politicas_disponibles: list) -> dict:

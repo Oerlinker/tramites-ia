@@ -29,7 +29,7 @@ async def audio_formulario(file: UploadFile = File(...)) -> JSONResponse:
     try:
         contenido = await file.read()
         result = await ia_service.audio_a_formulario(contenido, file.filename)
-        return JSONResponse(content=result)
+        return JSONResponse(content=result, media_type="application/json; charset=utf-8")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al procesar audio: {str(e)}")
 
