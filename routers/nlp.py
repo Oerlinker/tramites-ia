@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from services import ia_service
@@ -22,6 +22,16 @@ async def sugerir_formulario(request: SugerirFormularioRequest) -> JSONResponse:
         return JSONResponse(content=result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al sugerir campos del formulario: {str(e)}")
+
+
+@router.post("/audio-formulario")
+async def audio_formulario(file: UploadFile = File(...)) -> JSONResponse:
+    try:
+        contenido = await file.read()
+        result = await ia_service.audio_a_formulario(contenido, file.filename)
+        return JSONResponse(content=result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al procesar audio: {str(e)}")
 
 
 @router.post("/recomendar-politica")

@@ -69,6 +69,16 @@ Genera entre 3 y 8 campos relevantes para la actividad descrita."""
     return json.loads(text.strip())
 
 
+async def audio_a_formulario(audio_bytes: bytes, filename: str) -> dict:
+    transcripcion = _client.audio.transcriptions.create(
+        model="whisper-large-v3",
+        file=(filename, audio_bytes, "audio/webm"),
+        language="es"
+    )
+    campos = await sugerir_campos_formulario(transcripcion.text)
+    return {"transcripcion": transcripcion.text, "campos": campos.get("campos", [])}
+
+
 async def recomendar_politica(descripcion_tramite: str, politicas_disponibles: list) -> dict:
     politicas_str = json.dumps(politicas_disponibles, ensure_ascii=False)
     prompt = f"""Eres un experto en gestión de trámites y políticas empresariales.
